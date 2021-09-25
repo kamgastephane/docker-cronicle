@@ -1,5 +1,5 @@
-FROM       node:10.11-alpine
-LABEL      maintainer="Nicholas Amorim <nicholas@pagefreezer.com>"
+FROM       node:12.16.1-alpine
+LABEL      maintainer="Stephane Kamga <stepos01@gmail.com>"
 
 ARG        CRONICLE_VERSION='0.8.45'
 
@@ -12,7 +12,18 @@ ENV        CRONICLE_server_comm_use_hostnames 1
 ENV        CRONICLE_web_direct_connect 0
 
 RUN        apk add --no-cache git curl wget perl bash perl-pathtools tar \
-             procps tini
+             procps tini mongodb-tools unzip sudo
+# install aws cli
+RUN apk add --no-cache python3 py3-pip \
+        && pip3 install --upgrade pip \
+        && pip3 install \
+            awscli \
+        && rm -rf /var/cache/apk/*
+
+RUN        mkdir -p /cronicle
+COPY       plugins /cronicle/plugins
+COPY       jobs /cronicle/jobs
+COPY       setup.json /cronicle/setup.json
 
 RUN        adduser cronicle -D -h /opt/cronicle
 
@@ -29,7 +40,6 @@ RUN        curl -L "https://github.com/jhuckaby/Cronicle/archive/v${CRONICLE_VER
 ADD        entrypoint.sh /entrypoint.sh
 
 EXPOSE     3012
-
 # data volume is also configured in entrypoint.sh
 VOLUME     ["/opt/cronicle/data", "/opt/cronicle/logs", "/opt/cronicle/plugins"]
 
